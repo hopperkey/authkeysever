@@ -1287,132 +1287,162 @@
         }
 
         async function loadDashboardData() {
-            console.log('🔄 Loading dashboard data...');
+    console.log('🔄 Loading dashboard data...');
+    
+    try {
+        // Load stats
+        const appsResult = await callAPI('get_apps', { user_id: currentUserId });
+        if (appsResult.success) {
+            const apps = appsResult.applications || [];
+            document.getElementById('totalApps').textContent = apps.length;
+            currentApplications = apps;
             
-            try {
-                // Load stats
-                const appsResult = await callAPI('get_apps', { user_id: currentUserId });
-                if (appsResult.success) {
-                    const apps = appsResult.applications || [];
-                    document.getElementById('totalApps').textContent = apps.length;
-                    currentApplications = apps;
-                    
-                    console.log(`📊 Loaded ${apps.length} applications`);
-                    
-                    // Load recent apps
-                    const recentApps = apps.slice(0, 5);
-                    const appsBody = document.getElementById('recentAppsBody');
-                    appsBody.innerHTML = '';
-                    
-                    if (recentApps.length === 0) {
-                        appsBody.innerHTML = `
-                            <tr>
-                                <td colspan="7" class="empty-state">
-                                    <i class="fas fa-box"></i>
-                                    <p>No applications found</p>
-                                </td>
-                            </tr>
-                        `;
-                    } else {
-                        recentApps.forEach(app => {
-                            appsBody.innerHTML += `
-                                <tr>
-                                    <td><strong>${app.name}</strong></td>
-                                    <td><code style="background: #f1f3f9; padding: 4px 8px; border-radius: 4px;">${app.api_key}</code></td>
-                                    <td><span class="status-badge status-active">${app.created_by}</span></td>
-                                    <td>${new Date(app.created_at).toLocaleDateString()}</td>
-                                    <td>0</td>
-                                    <td><span class="status-badge status-active">Active</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="action-btn view" onclick="viewApp('${app.api_key}')" title="View">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            ${isAdminUser || app.created_by === currentUserId ? `
-                                            <button class="action-btn delete" onclick="deleteApp('${app.name}')" title="Delete">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                            ` : ''}
-                                        </div>
-                                    </td>
-                                </tr>
-                            `;
-                        });
-                    }
-                } else {
-                    console.error('Failed to load applications:', appsResult.message);
-                }
-
-                // Load keys
-                const keysResult = await callAPI('get_keys', { 
-                    user_id: currentUserId,
-                    api: currentApplications[0]?.api_key || ''
+            console.log(`📊 Loaded ${apps.length} applications`);
+            
+            // --- THÊM PHẦN NÀY: Tính apps hôm nay ---
+            const today = new Date().toDateString();
+            const todayApps = apps.filter(app => {
+                const appDate = new Date(app.created_at).toDateString();
+                return appDate === today;
+            });
+            document.getElementById('appChange').textContent = `+${todayApps.length} Today`;
+            // --- KẾT THÚC PHẦN THÊM ---
+            
+            // Load recent apps
+            const recentApps = apps.slice(0, 5);
+            const appsBody = document.getElementById('recentAppsBody');
+            appsBody.innerHTML = '';
+            
+            if (recentApps.length === 0) {
+                appsBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-box"></i>
+                            <p>No applications found</p>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                recentApps.forEach(app => {
+                    appsBody.innerHTML += `
+                        <tr>
+                            <td><strong>${app.name}</strong></td>
+                            <td><code style="background: #f1f3f9; padding: 4px 8px; border-radius: 4px;">${app.api_key}</code></td>
+                            <td><span class="status-badge status-active">${app.created_by}</span></td>
+                            <td>${new Date(app.created_at).toLocaleDateString()}</td>
+                            <td>0</td>
+                            <td><span class="status-badge status-active">Active</span></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn view" onclick="viewApp('${app.api_key}')" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    ${isAdminUser || app.created_by === currentUserId ? `
+                                    <button class="action-btn delete" onclick="deleteApp('${app.name}')" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    ` : ''}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
                 });
-                
-                if (keysResult.success) {
-                    const keys = keysResult.keys || [];
-                    document.getElementById('totalKeys').textContent = keys.length;
-                    currentKeys = keys;
-                    
-                    console.log(`🔑 Loaded ${keys.length} keys`);
-                    
-                    // Load recent keys
-                    const recentKeys = keys.slice(0, 5);
-                    const keysBody = document.getElementById('recentKeysBody');
-                    keysBody.innerHTML = '';
-                    
-                    if (recentKeys.length === 0) {
-                        keysBody.innerHTML = `
-                            <tr>
-                                <td colspan="6" class="empty-state">
-                                    <i class="fas fa-key"></i>
-                                    <p>No keys found</p>
-                                </td>
-                            </tr>
-                        `;
-                    } else {
-                        recentKeys.forEach(key => {
-                            const status = getKeyStatus(key);
-                            const statusText = getStatusBadge(status);
-                            
-                            keysBody.innerHTML += `
-                                <tr>
-                                    <td><code style="background: #f1f3f9; padding: 4px 8px; border-radius: 4px;">${key.key}</code></td>
-                                    <td>${key.api}</td>
-                                    <td>${new Date(key.expires_at).toLocaleDateString()}</td>
-                                    <td>${statusText}</td>
-                                    <td>${key.hwid ? 'Yes' : 'No'}</td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="action-btn view" onclick="viewKey('${key.key}', '${key.api}')" title="View">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            ${isAdminUser ? `
-                                            <button class="action-btn delete" onclick="deleteKey('${key.key}', '${key.api}')" title="Delete">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                            ` : ''}
-                                        </div>
-                                    </td>
-                                </tr>
-                            `;
-                        });
-                    }
-                } else {
-                    console.error('Failed to load keys:', keysResult.message);
-                }
-
-                // Update other stats
-                document.getElementById('totalUsers').textContent = '25';
-                document.getElementById('activeKeys').textContent = currentKeys.filter(k => !k.banned && new Date(k.expires_at) > new Date()).length;
-
-                console.log('✅ Dashboard data loaded successfully');
-
-            } catch (error) {
-                console.error('❌ Error loading dashboard:', error);
-                showToast('Lỗi khi tải dữ liệu dashboard', 'error');
             }
+        } else {
+            console.error('Failed to load applications:', appsResult.message);
         }
+
+        // Load keys
+        const keysResult = await callAPI('get_keys', { 
+            user_id: currentUserId,
+            api: currentApplications[0]?.api_key || ''
+        });
+        
+        if (keysResult.success) {
+            const keys = keysResult.keys || [];
+            document.getElementById('totalKeys').textContent = keys.length;
+            currentKeys = keys;
+            
+            console.log(`🔑 Loaded ${keys.length} keys`);
+            
+            // --- THÊM PHẦN NÀY: Tính keys hôm nay ---
+            const today = new Date().toDateString(); // Có thể dùng lại biến
+            const todayKeys = keys.filter(key => {
+                const keyDate = new Date(key.created_at).toDateString();
+                return keyDate === today;
+            });
+            document.getElementById('keyChange').textContent = `+${todayKeys.length} Today`;
+            // --- KẾT THÚC PHẦN THÊM ---
+            
+            // --- THÊM: Tính phần trăm Active ---
+            const activeKeysCount = keys.filter(k => !k.banned && new Date(k.expires_at) > new Date()).length;
+            const activePercent = keys.length > 0 ? 
+                Math.round((activeKeysCount / keys.length) * 100) : 0;
+            // --- KẾT THÚC PHẦN THÊM ---
+            
+            // Load recent keys
+            const recentKeys = keys.slice(0, 5);
+            const keysBody = document.getElementById('recentKeysBody');
+            keysBody.innerHTML = '';
+            
+            if (recentKeys.length === 0) {
+                keysBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <i class="fas fa-key"></i>
+                            <p>No keys found</p>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                recentKeys.forEach(key => {
+                    const status = getKeyStatus(key);
+                    const statusText = getStatusBadge(status);
+                    
+                    keysBody.innerHTML += `
+                        <tr>
+                            <td><code style="background: #f1f3f9; padding: 4px 8px; border-radius: 4px;">${key.key}</code></td>
+                            <td>${key.api}</td>
+                            <td>${new Date(key.expires_at).toLocaleDateString()}</td>
+                            <td>${statusText}</td>
+                            <td>${key.hwid ? 'Yes' : 'No'}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn view" onclick="viewKey('${key.key}', '${key.api}')" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    ${isAdminUser ? `
+                                    <button class="action-btn delete" onclick="deleteKey('${key.key}', '${key.api}')" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    ` : ''}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        } else {
+            console.error('Failed to load keys:', keysResult.message);
+        }
+
+        // Update other stats
+        document.getElementById('totalUsers').textContent = '25';
+        document.getElementById('activeKeys').textContent = currentKeys.filter(k => !k.banned && new Date(k.expires_at) > new Date()).length;
+        
+        // --- THÊM: Cập nhật phần trăm Active cho card thứ 4 ---
+        const activeCards = document.querySelectorAll('.stat-card:nth-child(4) .stat-change');
+        if (activeCards.length > 0) {
+            activeCards[0].textContent = `${activePercent || 0}% Active`;
+        }
+
+        console.log('✅ Dashboard data loaded successfully');
+
+    } catch (error) {
+        console.error('❌ Error loading dashboard:', error);
+        showToast('Lỗi khi tải dữ liệu dashboard', 'error');
+    }
+}
 
         function getKeyStatus(key) {
             if (key.banned) return 'banned';
