@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KeyAuth Admin - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --secondary: #3a0ca3;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --gray-light: #e9ecef;
+            --border-radius: 12px;
+            --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: var(--dark);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-header p {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--dark);
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--gray-light);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: var(--transition);
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary), var(--primary-light));
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(67, 97, 238, 0.2);
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .alert-danger {
+            background: rgba(247, 37, 133, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(247, 37, 133, 0.2);
+        }
+
+        .alert-success {
+            background: rgba(76, 201, 240, 0.1);
+            color: #0369a1;
+            border: 1px solid rgba(76, 201, 240, 0.2);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .role-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--gray-light);
+            border-radius: var(--border-radius);
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        .role-info ul {
+            margin: 10px 0 0 20px;
+        }
+
+        .role-info li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container" id="loginContainer">
+        <div class="login-header">
+            <h1><i class="fas fa-key"></i> KeyAuth System</h1>
+            <p>Đăng nhập bằng Discord ID</p>
+        </div>
+        
+        <div class="alert" id="alertMessage"></div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="userId"><i class="fas fa-user"></i> Discord User ID</label>
+                <input type="text" id="userId" class="form-control" placeholder="Nhập Discord ID của bạn" required value="1279324001180844085">
+                <small style="color: var(--gray); font-size: 12px; margin-top: 5px; display: block;">
+                    Demo: Dùng 1279324001180844085 để test
+                </small>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" id="loginBtn">
+                <span id="btnText"><i class="fas fa-sign-in-alt"></i> Đăng nhập</span>
+                <span id="btnLoader" class="loader" style="display: none;"></span>
+            </button>
+        </form>
+        
+        <div class="role-info">
+            <strong><i class="fas fa-info-circle"></i> Thông tin phân quyền:</strong>
+            <ul>
+                <li><strong>Admin (1279324001180844085):</strong> Toàn quyền quản lý hệ thống</li>
+                <li><strong>Support:</strong> Chỉ quản lý apps/keys của mình</li>
+                <li><strong>User:</strong> Không có quyền truy cập</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:3000/auth';
+        
+        function showAlert(message, type = 'danger') {
+            const alert = document.getElementById('alertMessage');
+            alert.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+        }
+
+        function hideAlert() {
+            document.getElementById('alertMessage').style.display = 'none';
+        }
+
+        async function callAPI(action, data = {}) {
+            try {
+                console.log('📤 Calling API:', action, data);
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ action, ...data })
+                });
+
+                console.log('📥 Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Response error:', errorText);
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('✅ API Result:', result);
+                return result;
+            } catch (error) {
+                console.error('❌ API Error:', error);
+                throw error;
+            }
+        }
+
+        async function checkUserPermission(userId) {
+            try {
+                console.log('🔍 Checking permission for user:', userId);
+                
+                // 1. Kiểm tra xem có phải support không
+                const supportResult = await callAPI('check_support', { user_id: userId });
+                console.log('Support check result:', supportResult);
+                
+                if (!supportResult.success) {
+                    return { 
+                        allowed: false, 
+                        role: 'user',
+                        message: 'Bạn không có quyền truy cập hệ thống'
+                    };
+                }
+                
+                // 2. Kiểm tra xem có phải admin không
+                const permissionResult = await callAPI('check_permission', { 
+                    user_id: userId, 
+                    api: 'admin_check' 
+                });
+                console.log('Permission check result:', permissionResult);
+                
+                const isAdmin = permissionResult.success && permissionResult.is_admin;
+                const isSupport = supportResult.success && supportResult.is_support;
+                
+                return {
+                    allowed: true,
+                    role: isAdmin ? 'admin' : 'support',
+                    isAdmin: isAdmin,
+                    isSupport: isSupport,
+                    appCount: permissionResult.app_count || 0,
+                    maxApps: permissionResult.max_apps || 0
+                };
+                
+            } catch (error) {
+                console.error('❌ Permission check error:', error);
+                return {
+                    allowed: false,
+                    role: 'error',
+                    message: 'Lỗi kiểm tra quyền. API server có thể đang bảo trì.'
+                };
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const userId = document.getElementById('userId').value.trim();
+            const loginBtn = document.getElementById('loginBtn');
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
+            
+            if (!userId) {
+                showAlert('Vui lòng nhập Discord ID');
+                return;
+            }
+
+            // Hiển thị loading
+            btnText.innerHTML = 'Đang kiểm tra quyền...';
+            btnLoader.style.display = 'inline-block';
+            loginBtn.disabled = true;
+            hideAlert();
+
+            try {
+                // Test API connection first
+                const testResult = await callAPI('test');
+                console.log('API test result:', testResult);
+                
+                if (!testResult.success) {
+                    showAlert('API server không phản hồi. Vui lòng thử lại sau.');
+                    resetLoginButton();
+                    return;
+                }
+                
+                const permission = await checkUserPermission(userId);
+                
+                if (permission.allowed) {
+                    // Lưu thông tin user vào localStorage
+                    localStorage.setItem('auth_user_id', userId);
+                    localStorage.setItem('auth_role', permission.role);
+                    localStorage.setItem('auth_isAdmin', permission.isAdmin);
+                    localStorage.setItem('auth_isSupport', permission.isSupport);
+                    localStorage.setItem('auth_timestamp', Date.now());
+                    
+                    // Hiển thị thông báo thành công
+                    const roleName = permission.role === 'admin' ? '👑 Quản trị viên' : '🔧 Hỗ trợ viên';
+                    showAlert(`Đăng nhập thành công với vai trò: ${roleName}`, 'success');
+                    
+                    // Chuyển hướng sau 1 giây
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000);
+                } else {
+                    showAlert(permission.message || 'Bạn không có quyền truy cập hệ thống!');
+                    resetLoginButton();
+                }
+            } catch (error) {
+                showAlert('Lỗi kết nối đến API server. Vui lòng thử lại!');
+                console.error('Login error:', error);
+                resetLoginButton();
+            }
+        });
+
+        function resetLoginButton() {
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
+            const loginBtn = document.getElementById('loginBtn');
+            
+            btnText.innerHTML = '<i class="fas fa-sign-in-alt"></i> Đăng nhập';
+            btnLoader.style.display = 'none';
+            loginBtn.disabled = false;
+        }
+
+        // Auto-focus on input
+        document.getElementById('userId').focus();
+        
+        // Check if already logged in
+        if (localStorage.getItem('auth_user_id')) {
+            // Auto redirect if session is valid (less than 24 hours)
+            const timestamp = localStorage.getItem('auth_timestamp');
+            const hoursDiff = (Date.now() - timestamp) / (1000 * 60 * 60);
+            
+            if (hoursDiff < 24) {
+                window.location.href = 'dashboard.html';
+            } else {
+                // Clear expired session
+                localStorage.clear();
+            }
+        }
+        
+        // Auto test API on load
+        window.addEventListener('load', async () => {
+            try {
+                const testResult = await callAPI('test');
+                if (testResult.success) {
+                    console.log('✅ API is working!');
+                }
+            } catch (error) {
+                console.warn('⚠️ API test failed on load:', error.message);
+            }
+        });
+    </script>
+</body>
+</html>
