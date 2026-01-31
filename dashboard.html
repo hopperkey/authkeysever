@@ -1289,6 +1289,20 @@ async function loadDashboardData() {
             console.log('🔄 Loading dashboard data...');
             
             try {
+            
+            
+            const keysResult = await callAPI('get_keys', { 
+            user_id: currentUserId,
+            api: ''  // ⬅️ THAY ĐỔI: Để trống để lấy TẤT CẢ keys
+        });
+        
+        if (keysResult.success) {
+            const keys = keysResult.keys || [];
+            document.getElementById('totalKeys').textContent = keys.length;
+            currentKeys = keys;
+            
+            console.log(`🔑 Loaded ${keys.length} keys (TẤT CẢ)`);
+        }
                 // Load stats
                 const appsResult = await callAPI('get_apps', { user_id: currentUserId });
                 if (appsResult.success) {
@@ -1458,6 +1472,9 @@ async function loadDashboardData() {
                         `;
                     } else {
                         apps.forEach((app, index) => {
+                        
+                        const keyCount = currentKeys ? 
+        currentKeys.filter(k => k.api === app.api_key).length : 0;
                             tbody.innerHTML += `
                                 <tr>
                                     <td>${index + 1}</td>
@@ -1740,6 +1757,9 @@ async function loadDashboardData() {
                     document.getElementById('appOwner').value = '';
                     document.getElementById('appDesc').value = '';
                     
+                    
+                    await loadDashboardData();
+                    
                     // Refresh data
                     loadDashboardData();
                     loadApplications();
@@ -1809,6 +1829,13 @@ async function loadDashboardData() {
                     document.getElementById('keyDays').value = '30';
                     document.getElementById('keyDevices').value = '1';
                     document.getElementById('keyQuantity').value = '1';
+                    
+                    / Refresh dashboard data
+        await loadDashboardData();
+        // Refresh keys table nếu đang ở tab Keys
+        if (document.getElementById('keysSection').style.display !== 'none') {
+            await loadKeys();
+        }
                     
                     // Refresh data
                     loadDashboardData();
