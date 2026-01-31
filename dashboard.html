@@ -1127,7 +1127,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script>
-        const API_URL = 'http://127.0.0.1:3000/auth';
+        const API_URL = 'https://keyauth-vsjd.onrender.com';
         let currentUserId = '';
         let currentUserRole = '';
         let isAdminUser = false;
@@ -1285,24 +1285,11 @@
                 throw error;
             }
         }
-async function loadDashboardData() {
+
+        async function loadDashboardData() {
             console.log('🔄 Loading dashboard data...');
             
             try {
-            
-            
-            const keysResult = await callAPI('get_keys', { 
-            user_id: currentUserId,
-            api: ''  // ⬅️ THAY ĐỔI: Để trống để lấy TẤT CẢ keys
-        });
-        
-        if (keysResult.success) {
-            const keys = keysResult.keys || [];
-            document.getElementById('totalKeys').textContent = keys.length;
-            currentKeys = keys;
-            
-            console.log(`🔑 Loaded ${keys.length} keys (TẤT CẢ)`);
-        }
                 // Load stats
                 const appsResult = await callAPI('get_apps', { user_id: currentUserId });
                 if (appsResult.success) {
@@ -1328,16 +1315,13 @@ async function loadDashboardData() {
                         `;
                     } else {
                         recentApps.forEach(app => {
-                        
-                        const keyCount = currentKeys ? 
-        currentKeys.filter(k => k.api === app.api_key).length : 0;
                             appsBody.innerHTML += `
                                 <tr>
                                     <td><strong>${app.name}</strong></td>
                                     <td><code style="background: #f1f3f9; padding: 4px 8px; border-radius: 4px;">${app.api_key}</code></td>
                                     <td><span class="status-badge status-active">${app.created_by}</span></td>
                                     <td>${new Date(app.created_at).toLocaleDateString()}</td>
-                                    <td>${countKeysForApp(app.api_key)}</td> <!-- Sẽ tính số keys thực tế -->
+                                    <td>0</td>
                                     <td><span class="status-badge status-active">Active</span></td>
                                     <td>
                                         <div class="action-buttons">
@@ -1472,9 +1456,6 @@ async function loadDashboardData() {
                         `;
                     } else {
                         apps.forEach((app, index) => {
-                        
-                        const keyCount = currentKeys ? 
-        currentKeys.filter(k => k.api === app.api_key).length : 0;
                             tbody.innerHTML += `
                                 <tr>
                                     <td>${index + 1}</td>
@@ -1757,9 +1738,6 @@ async function loadDashboardData() {
                     document.getElementById('appOwner').value = '';
                     document.getElementById('appDesc').value = '';
                     
-                    
-                    await loadDashboardData();
-                    
                     // Refresh data
                     loadDashboardData();
                     loadApplications();
@@ -1829,13 +1807,6 @@ async function loadDashboardData() {
                     document.getElementById('keyDays').value = '30';
                     document.getElementById('keyDevices').value = '1';
                     document.getElementById('keyQuantity').value = '1';
-                    
-                    / Refresh dashboard data
-        await loadDashboardData();
-        // Refresh keys table nếu đang ở tab Keys
-        if (document.getElementById('keysSection').style.display !== 'none') {
-            await loadKeys();
-        }
                     
                     // Refresh data
                     loadDashboardData();
@@ -2129,15 +2100,6 @@ async function loadDashboardData() {
             loadSupports();
             showToast('Đã làm mới danh sách support', 'success');
         }
-        
-        // Thêm hàm đếm số keys của một application
-function countKeysForApp(apiKey) {
-    if (!currentKeys || !currentKeys.length) return 0;
-    
-    // Đếm số keys có api trùng với apiKey
-    const appKeys = currentKeys.filter(key => key.api === apiKey);
-    return appKeys.length;
-}
 
         function refreshUsers() {
             loadUsers();
